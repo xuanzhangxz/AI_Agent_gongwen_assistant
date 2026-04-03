@@ -1,60 +1,78 @@
-# 公文写作 Agent Starter
+# 公文写作 Agent
 
-这是一个从 0 到 1 的起步版项目，目标是把你的两类核心资产沉淀为可调用的知识库：
+## 项目简介
 
-1. 公文写作标准、格式规范、禁忌要求。
-2. 领导认可的优秀历史公文案例。
+公文写作 Agent 是一个面向政务办公场景的智能写作辅助项目，目标是将“公文写作规范”“历史优秀案例”“固定模板”沉淀为可调用知识库，并基于大模型能力，对业务人员提交的粗稿进行规范化改写、结构优化和合规复审。
 
-你后续只需要提供一份粗稿，Agent 就会先检索最相关的规范和案例，再调用大模型完成两轮处理：
+本项目适用于以下场景：
 
-1. 依据规范与案例进行正式改写。
-2. 依据检查清单进行合规复审，必要时自动二次修订。
+- 向局领导报送工作进展汇报、专题汇报、阶段性总结等材料。
+- 对已有初稿进行正式化、规范化润色。
+- 对公文写作标准进行沉淀与复用，降低人工反复修改成本。
 
-当前版本的特点：
+## 建设目标
 
-- 支持直接读取 `.md`、`.txt`、`.docx` 资料。
-- 针对中文做了轻量检索，适合“工作进展汇报”等公文场景。
-- 默认走 OpenAI `Responses API`，便于后续继续扩展为工具型 Agent。
-- 输出既可以是提交版公文，也可以附带一份内部校核报告。
+- 将分散的写作标准、领导偏好和优秀案例形成统一知识底座。
+- 建立“粗稿输入、自动改写、自动复审、成稿输出”的标准化工作流。
+- 在不编造事实的前提下，提高公文初稿质量与出稿效率。
+- 为后续建设网页工具、内部服务或企业办公集成接口提供基础能力。
 
-## 目录结构
+## 核心能力
 
-```text
-.
-├── drafts/                     # 你的待润色粗稿
-├── knowledge/
-│   ├── standards/             # 公文规范、写作标准、禁忌
-│   ├── exemplars/             # 优秀案例
-│   ├── templates/             # 常用文种模板
-│   └── README.md              # 资料整理说明
-├── outputs/                   # 成稿与校核报告
-├── src/gov_writer_agent/      # 核心代码
-└── tests/                     # 基础单测
-```
+- 支持加载 `.md`、`.txt`、`.docx` 三类资料文件。
+- 支持按“规范、模板、案例”三类知识进行检索召回。
+- 支持基于中文语料的轻量检索与片段相关性排序。
+- 支持公文首轮改写、合规复审与必要时二次修订。
+- 支持输出正式成稿与内部校核报告。
+- 支持命令行原生命令和本地 `@` 风格调用。
+
+## 工作机制
+
+系统默认采用以下处理流程：
+
+1. 读取用户提供的粗稿、文种、受众和目标信息。
+2. 从知识库中分别召回相关规范、模板和优秀案例片段。
+3. 依据“规范优先、模板约束、案例参考”的原则生成首轮成稿。
+4. 对首轮成稿执行合规复审，重点检查格式、逻辑、措辞和事实风险。
+5. 如复审未通过，则基于问题清单执行二次修订。
+6. 输出正式稿，并可选输出校核报告。
 
 ## 快速开始
 
-1. 安装本项目
+### 1. 安装项目
 
 ```bash
 python3 -m pip install -e .
 ```
 
-2. 配置环境变量
+### 2. 配置环境变量
 
-   把 [`.env.example`](/Users/zhangxuan/AI_Agent/.env.example) 复制为 `.env`，填入你的 `OPENAI_API_KEY`。
+将 [`.env.example`](/Users/zhangxuan/AI_Agent/.env.example) 复制为 `.env`，并至少配置以下参数：
 
-3. 准备资料
+```env
+OPENAI_API_KEY=sk-...
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_MODEL=gpt-5.4
+OPENAI_REASONING_EFFORT=medium
+```
 
-   把你的规范文件放入 [knowledge/standards](/Users/zhangxuan/AI_Agent/knowledge/standards)。
-   把高质量案例放入 [knowledge/exemplars](/Users/zhangxuan/AI_Agent/knowledge/exemplars)。
-   把固定模板放入 [knowledge/templates](/Users/zhangxuan/AI_Agent/knowledge/templates)。
+### 3. 准备知识库资料
 
-4. 准备初稿
+- 将公文规范、写作要求、禁忌要求放入 [knowledge/standards](/Users/zhangxuan/AI_Agent/knowledge/standards)
+- 将优秀历史案例放入 [knowledge/exemplars](/Users/zhangxuan/AI_Agent/knowledge/exemplars)
+- 将文种模板放入 [knowledge/templates](/Users/zhangxuan/AI_Agent/knowledge/templates)
 
-   参考 [drafts/sample_draft.md](/Users/zhangxuan/AI_Agent/drafts/sample_draft.md) 的形式放入待处理草稿。
+资料整理要求见 [knowledge/README.md](/Users/zhangxuan/AI_Agent/knowledge/README.md)。
 
-5. 执行改写
+### 4. 执行命令
+
+查看知识库：
+
+```bash
+gov-writer-agent @list-knowledge
+```
+
+执行改写：
 
 ```bash
 gov-writer-agent @rewrite \
@@ -66,76 +84,46 @@ gov-writer-agent @rewrite \
   --goal 提交一版可直接审阅的正式汇报稿
 ```
 
-6. 查看知识库加载情况
-
-```bash
-gov-writer-agent @list-knowledge
-```
-
-如果你更喜欢“先 @ Agent，再下命令”的风格，也支持：
+也支持以下写法：
 
 ```bash
 gov-writer-agent @公文助手 rewrite --draft drafts/sample_draft.md --output outputs/final_report.md
-gov-writer-agent @公文助手 list-knowledge
-```
-
-也兼容原始命令写法：
-
-```bash
 gov-writer-agent rewrite --draft drafts/sample_draft.md --output outputs/final_report.md
-gov-writer-agent list-knowledge
 ```
 
-## 推荐资料整理方式
+## 目录结构
 
-建议每份资料都放一个简短头部，便于后续精确召回：
-
-```yaml
----
-title: 关于重点项目推进情况的汇报
-doc_type: 工作进展汇报
-audience: 局领导
-tags: 项目推进, 重点工作, 风险问题
----
+```text
+.
+├── drafts/                     # 待处理粗稿
+├── knowledge/
+│   ├── standards/             # 写作规范、格式要求、禁忌清单
+│   ├── exemplars/             # 优秀案例
+│   ├── templates/             # 文种模板
+│   └── README.md              # 知识库整理说明
+├── outputs/                   # 成稿与复审报告
+├── src/gov_writer_agent/      # 核心实现
+└── tests/                     # 测试用例
 ```
 
-头部不是必填；没有头部也可以用。
+## 文档导航
 
-## 当前工作流
+- 项目说明：[docs/PROJECT_OVERVIEW.md](/Users/zhangxuan/AI_Agent/docs/PROJECT_OVERVIEW.md)
+- 使用说明：[docs/USER_GUIDE.md](/Users/zhangxuan/AI_Agent/docs/USER_GUIDE.md)
+- 知识库整理说明：[knowledge/README.md](/Users/zhangxuan/AI_Agent/knowledge/README.md)
 
-### 1. 知识沉淀
+## 当前边界
 
-- 标准规范优先级最高，用于约束格式、逻辑、语气和禁忌。
-- 模板用于约束文种结构。
-- 优秀案例用于学习措辞、段落组织和汇报节奏。
+- 当前版本不会擅自补造数据、领导指示、会议结论或政策依据。
+- 对信息不充分的场景，系统优先采用审慎表述，而非虚构细节。
+- 当前未内建 `.pdf` 解析，建议先转换为 `.docx`、`.md` 或 `.txt`。
+- `@公文助手` 和 `@rewrite` 属于本地包装调用，不是 Codex CLI 原生内建语法。
 
-### 2. 检索召回
+## 后续建议
 
-- 系统会从草稿、文种、受众、目标中提取查询线索。
-- 针对中文做分词近似和双字切分，提高召回效果。
-- 会对 `standards`、`templates`、`exemplars` 分别取高相关片段。
+如需继续工程化，建议优先补充以下能力：
 
-### 3. 两轮生成
-
-- 第一轮：把粗稿改写为正式公文。
-- 第二轮：按检查清单复审，不达标就自动修订。
-
-### 4. 输出控制
-
-- `--output` 输出提交版公文。
-- `--report` 输出内部校核报告，便于你和同事快速看修改依据。
-
-## 下一步最值得做的增强
-
-如果你确认这个方向对，可以继续叠加三层能力：
-
-1. 把“不同文种”拆成独立模板，例如请示、汇报、方案、总结。
-2. 对优秀案例做标签化，例如“领导偏好用语”“问题风险表述”“下一步工作写法”。
-3. 引入评测集，对 Agent 的输出做自动打分，持续优化提示词和资料组织。
-
-## 注意事项
-
-- 当前版本不会凭空编造数据、会议纪要或领导指示；信息不全时会优先使用审慎表述。
-- `.pdf` 暂未内建解析，建议先转成 `.docx`、`.md` 或 `.txt` 再放入知识库。
-- 若你后续要做成网页工具或企业内部服务，这个 starter 可以直接作为后端核心流程继续扩展。
-- `@公文助手` 和 `@rewrite` 这种是本地包装调用，目的是提供接近 at mention 的使用体验；它不会注册为 Codex CLI 内建的原生 `@...` 语法。
+- 按文种拆分模板体系，例如请示、方案、总结、专报。
+- 对优秀案例增加标签，例如场景、风格、受众、常用句式。
+- 建设评测集，对输出稿件的规范性与可用性做持续评估。
+- 对接网页端、办公机器人或内部服务接口。
